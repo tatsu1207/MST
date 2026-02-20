@@ -74,9 +74,19 @@ uploaded = st.file_uploader(
 )
 
 with st.expander("Options", expanded=True):
+    _ALL_GROUPS   = ["bat", "chicken", "cow", "duck", "groundwater",
+                     "horse", "human", "pig", "river", "seawater"]
+    _DEFAULT_ON   = {"bat", "chicken", "cow", "duck", "human", "pig", "river"}
+    st.markdown("**Source groups**")
+    _gcols = st.columns(len(_ALL_GROUPS))
+    _sel   = [g for i, g in enumerate(_ALL_GROUPS)
+              if _gcols[i].checkbox(g, value=(g in _DEFAULT_ON), key=f"grp2_{g}")]
+    groups = ",".join(_sel)
+    if not _sel:
+        st.warning("Select at least one source group.")
+
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        groups    = st.text_input("Source groups", "pig,cow,duck,chicken,human,bat,river")
         mode      = st.selectbox("Feature mode", ["asv", "otu"])
     with c2:
         src_depth = st.number_input("Source rarefaction depth", value=1000, min_value=100)
