@@ -231,8 +231,8 @@ def generate_learn_errors_script(temp_dir, threads):
     filtFs <- readRDS(file.path(path, "filtFs.rds"))
     filtRs <- readRDS(file.path(path, "filtRs.rds"))
     
-    errF <- learnErrors(filtFs, multithread={threads})
-    errR <- learnErrors(filtRs, multithread={threads})
+    errF <- learnErrors(filtFs, nbases=1e7, multithread={threads})
+    errR <- learnErrors(filtRs, nbases=1e7, multithread={threads})
     
     saveRDS(errF, file.path(path, "errF.rds"))
     saveRDS(errR, file.path(path, "errR.rds"))
@@ -324,6 +324,7 @@ TRUNC_DEFAULTS = {
     ("v34", 300): (120, 180),
     ("v4",  250): (180, 120),
     ("v4",  300): (180, 120),
+    ("v45", 250): (200, 100),
     ("v45", 300): (200, 100),
 }
 

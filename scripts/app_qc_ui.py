@@ -61,8 +61,8 @@ CASE_TABLE = """
 | 6 | V3-V4 | 250 bp | Trimmed | `-g 515F --overlap 16` |
 | 7 | V3-V4 | 300 bp | Included | `-g 515F --overlap 16 -G 806R -A 515F_RC` |
 | 8 | V3-V4 | 300 bp | Trimmed | `-g 515F --overlap 16 -A 515F_RC` |
-| 9 | V4-V5 | 250 bp | Included | *Error — insufficient overlap* |
-| 10 | V4-V5 | 250 bp | Trimmed | *Error — insufficient overlap* |
+| 9 | V4-V5 | 250 bp | Included | `-g 515F -G 806R --overlap 16 --discard-untrimmed --minimum-length 150:150` |
+| 10 | V4-V5 | 250 bp | Trimmed | `--minimum-length 150:150` |
 | 11 | V4-V5 | 300 bp | Included | `-g 515F -G 806R --overlap 16 -a 806R_RC --minimum-length 150:40` |
 | 12 | V4-V5 | 300 bp | Trimmed | `-G 806R --overlap 16 -a 806R_RC --minimum-length 150:40` |
 """
@@ -387,11 +387,17 @@ def get_cutadapt_args(region, length, primer_status):
 
     if region == "V4-V5":
         if length == 250:
-            case = 9 if included else 10
-            return None, case, (
-                "V4-V5 with 250 bp reads: insufficient overlap after V4 "
-                "extraction for paired-end merging. Use 300 bp reads."
-            )
+            # 250 bp reads on ~390 bp amplicon → ~110 bp overlap after primer
+            # removal; sufficient for paired-end merging.
+            minlen_v45_250 = ["--minimum-length", "150:150"]
+            if included:
+                return [
+                    "-g", PRIMERS["515F"],
+                    "-G", PRIMERS["806R"],
+                    "--overlap", "16",
+                    "--discard-untrimmed",
+                ] + minlen_v45_250, 9, None
+            return minlen_v45_250, 10, None
         # 300 bp
         if included:
             return [
