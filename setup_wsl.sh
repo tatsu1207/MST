@@ -127,6 +127,16 @@ if _maybe_remove "$ENV_ST"; then
         bioconductor-dada2
     success "R + DADA2 installed."
 
+    # ── 1d. Pin TBB to 2020.x ────────────────────────────────────────────────
+    # dada2 is compiled against the old tbb::task API removed in TBB 2021+.
+    # Downgrading TBB (and the matching r-rcppparallel) prevents the
+    # "undefined symbol: _ZTIN3tbb4taskE" runtime error on library load.
+    info "Pinning TBB to 2020.x for dada2 compatibility…"
+    $CM install -y -n "$ENV_ST" \
+        -c conda-forge \
+        "tbb=2020.*"
+    success "TBB pinned."
+
 fi  # end _maybe_remove ST
 
 # =============================================================================

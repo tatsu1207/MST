@@ -11,8 +11,24 @@ output_dir  : proportions.csv and stds.csv written here
 """
 
 import sys
+import numpy as np
 import pandas as pd
-from sourcetracker._sourcetracker import gibbs, subsample_dataframe
+
+# sourcetracker uses removed np.int / np.float aliases (dropped in NumPy 1.24)
+np.int   = int
+np.float = float
+np.bool  = bool
+
+from sourcetracker._sourcetracker import _gibbs, subsample_counts
+
+
+def subsample_dataframe(df, depth):
+    """Row-wise rarefaction wrapper around subsample_counts."""
+    rows = {
+        idx: subsample_counts(row.values.astype(int), depth)
+        for idx, row in df.iterrows()
+    }
+    return pd.DataFrame(rows, index=df.columns).T.rename_axis(df.index.name)
 
 source_path, sink_path, output_dir = sys.argv[1], sys.argv[2], sys.argv[3]
 src_depth = int(sys.argv[4])
@@ -84,12 +100,11 @@ print(f"Rarefied: {source_rare.shape[0]} sources, "
       f"{sink_rare.shape[0]} sinks, {len(common)} features", flush=True)
 print(f"Running Gibbs: restarts={restarts} burnin={burnin} draws={draws}", flush=True)
 
-mpm, mps, _ = gibbs(
+mpm, mps = _gibbs(
     source_rare, sink_rare,
     alpha1=0.001, alpha2=0.1, beta=10,
     restarts=restarts, draws_per_restart=draws,
-    burnin=burnin, delay=1,
-    jobs=1, create_feature_tables=False,
+    burnin=burnin, delay=2,  # must be >1; delay=1 means (x%1)==1 is never true
 )
 
 import os

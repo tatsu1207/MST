@@ -4,21 +4,10 @@
 
 title MST Multi-tab
 
-:: Verify conda is available
-where conda >nul 2>&1
+:: Verify WSL is available
+where wsl >nul 2>&1
 if errorlevel 1 (
-    echo [ERR] conda not found on PATH.
-    echo       Install Miniconda and restart your terminal:
-    echo       https://docs.conda.io/en/latest/miniconda.html
-    pause
-    exit /b 1
-)
-
-:: Verify the ST environment exists
-conda env list | findstr /B "ST " >nul 2>&1
-if errorlevel 1 (
-    echo [ERR] Conda environment "ST" not found.
-    echo       Run setup_wsl.sh inside WSL to create it first.
+    echo [ERR] WSL not found. Please enable Windows Subsystem for Linux.
     pause
     exit /b 1
 )
@@ -29,6 +18,6 @@ echo  Open your browser at:  http://localhost:8501
 echo  Press Ctrl+C here to stop the server.
 echo.
 
-conda run --no-capture-output -n ST streamlit run scripts/app.py
+wsl bash -c "cd /mnt/d/github/MST_test && /home/unnot/miniforge3/bin/conda run --no-capture-output -n ST streamlit run scripts/app.py"
 
 pause
