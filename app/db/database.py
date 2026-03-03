@@ -63,3 +63,6 @@ def init_db():
         if "error_model" not in ds_cols:
             conn.execute(text("ALTER TABLE datasets ADD COLUMN error_model VARCHAR"))
             conn.commit()
+        if "taxonomy_path" not in ds_cols:
+            conn.execute(text("ALTER TABLE datasets ADD COLUMN taxonomy_path VARCHAR"))
+            conn.commit()

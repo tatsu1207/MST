@@ -102,7 +102,8 @@ class Dataset(Base):
     pipeline_log_path: Mapped[str | None] = mapped_column(String)
     trunc_len_f: Mapped[int | None] = mapped_column(Integer)
     trunc_len_r: Mapped[int | None] = mapped_column(Integer)
-    error_model: Mapped[str | None] = mapped_column(String)  # default/PacBio/Nanopore
+    error_model: Mapped[str | None] = mapped_column(String)  # default/PacBio
+    taxonomy_path: Mapped[str | None] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from app.config import DADA2_ENV_NAME, R_SCRIPTS_DIR, conda_cmd
+from app.config import DADA2_ENV_NAME, R_SCRIPTS_DIR, SILVA_SPECIES_ASSIGN, SILVA_TRAIN_SET, conda_cmd
 
 
 def run_dada2(
@@ -136,3 +136,74 @@ def run_dada2(
         "sample_count": sample_count,
         "track_reads": track_reads,
     }
+
+
+def run_taxonomy(
+    asv_table_path: Path,
+    output_dir: Path,
+    threads: int,
+    logger: logging.Logger,
+    proc_callback: Callable[[subprocess.Popen], None] | None = None,
+) -> dict:
+    """Run SILVA 138.1 taxonomy assignment via the R script.
+
+    Extracts representative sequences from the ASV table, then calls
+    DADA2's assignTaxonomy + addSpecies.
+
+    Returns:
+        dict with: taxonomy_path (str), success (bool)
+    """
+    # Extract representative sequences FASTA from asv_table.tsv
+    rep_seqs_path = output_dir / "rep_seqs.fasta"
+    asv_df = pd.read_csv(asv_table_path, sep="\t")
+    with open(rep_seqs_path, "w") as fh:
+        for _, row in asv_df.iterrows():
+            fh.write(f">{row['ASV_ID']}\n{row['sequence']}\n")
+    logger.info(f"Extracted {len(asv_df)} representative sequences")
+
+    taxonomy_path = output_dir / "taxonomy.tsv"
+
+    cmd = conda_cmd([
+        "Rscript", str(R_SCRIPTS_DIR / "run_taxonomy.R"),
+        "--rep_seqs", str(rep_seqs_path),
+        "--output", str(taxonomy_path),
+        "--silva_train", str(SILVA_TRAIN_SET),
+        "--silva_species", str(SILVA_SPECIES_ASSIGN),
+        "--threads", str(threads),
+    ], env_name=DADA2_ENV_NAME)
+
+    logger.info("Running taxonomy assignment (SILVA 138.1)...")
+
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+        start_new_session=True,
+    )
+    if proc_callback:
+        proc_callback(proc)
+
+    last_line = ""
+    for line in proc.stdout:
+        stripped = line.rstrip()
+        if stripped:
+            logger.info(f"[Taxonomy] {stripped}")
+            last_line = stripped
+
+    proc.wait()
+
+    if proc.returncode != 0:
+        raise RuntimeError(f"Taxonomy R script failed (exit code {proc.returncode})")
+
+    # Parse JSON status
+    try:
+        r_status = json.loads(last_line)
+        if r_status.get("status") == "error":
+            raise RuntimeError(f"Taxonomy error: {r_status.get('message', 'unknown')}")
+    except json.JSONDecodeError:
+        pass
+
+    if not taxonomy_path.exists():
+        raise FileNotFoundError(f"Taxonomy output not found: {taxonomy_path}")
+
+    logger.info(f"Taxonomy assignment complete: {taxonomy_path}")
+
+    return {"success": True, "taxonomy_path": str(taxonomy_path)}

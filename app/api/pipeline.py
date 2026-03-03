@@ -1,7 +1,10 @@
 """
 MST-Pipeline — Pipeline control API endpoints.
 """
-from fastapi import APIRouter, Depends
+import tempfile
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -13,9 +16,11 @@ from app.pipeline.runner import (
     get_pathogen_status,
     get_pipeline_status,
     get_sourcetracker_status,
+    get_taxonomy_status,
     launch_dada2_pipeline,
     launch_pathogen_run,
     launch_sourcetracker_run,
+    launch_taxonomy_for_dataset,
 )
 
 router = APIRouter(prefix="/api", tags=["pipeline"])
@@ -69,6 +74,7 @@ def list_datasets(db: Session = Depends(get_db)):
             "sample_count": d.sample_count,
             "asv_count": d.asv_count,
             "asv_table_path": d.asv_table_path,
+            "taxonomy_path": d.taxonomy_path,
             "created_at": d.created_at.isoformat() if d.created_at else None,
         }
         for d in datasets
@@ -170,3 +176,56 @@ def launch_path(req: PathogenLaunchRequest, db: Session = Depends(get_db)):
 def path_status(run_id: int):
     """Get pathogen detection run status."""
     return get_pathogen_status(run_id)
+
+
+# -- BIOM Import ---------------------------------------------------------------
+
+@router.post("/biom/import")
+async def import_biom_endpoint(
+    file: UploadFile = File(...),
+    name: str = Form("BIOM Import"),
+):
+    """Import a pre-processed BIOM file as a completed Dataset."""
+    from app.pipeline.biom_import import import_biom
+
+    with tempfile.NamedTemporaryFile(suffix=".biom", delete=False) as tmp:
+        content = await file.read()
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    try:
+        result = import_biom(tmp_path, name=name)
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+    return {
+        "dataset_id": result["dataset_id"],
+        "status": "complete",
+        "has_taxonomy": result["has_taxonomy"],
+        "sample_count": result["sample_count"],
+        "asv_count": result["asv_count"],
+        "variable_region": result["variable_region"],
+    }
+
+
+# -- Taxonomy (standalone) ----------------------------------------------------
+
+class TaxonomyLaunchRequest(BaseModel):
+    dataset_id: int
+    threads: int = 4
+
+
+@router.post("/taxonomy/launch")
+def launch_taxonomy(req: TaxonomyLaunchRequest):
+    """Launch taxonomy assignment for a dataset that lacks taxonomy."""
+    dataset_id = launch_taxonomy_for_dataset(
+        dataset_id=req.dataset_id,
+        threads=req.threads,
+    )
+    return {"dataset_id": dataset_id, "status": "launched"}
+
+
+@router.get("/taxonomy/status/{dataset_id}")
+def taxonomy_status(dataset_id: int):
+    """Get taxonomy pipeline status."""
+    return get_taxonomy_status(dataset_id)
