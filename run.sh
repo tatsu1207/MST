@@ -35,8 +35,8 @@ fi
 # Activate environment
 conda activate "${ENV_NAME}"
 
-# Derive port from UID: 7000 + UID (e.g. UID 1000 → port 8000)
-PORT=$((8000 + $(id -u)))
+# Derive port from UID: 7100 + UID (e.g. UID 1000 → port 8000)
+PORT=$((7100 + $(id -u)))
 
 # Kill existing process on our port if running
 EXISTING_PID=$(lsof -ti:${PORT} 2>/dev/null || true)

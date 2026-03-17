@@ -23,10 +23,11 @@ SILVA_SPECIES = CONFIG_DIR / "silva_nr99_v138.1_wSpecies_train_set_v4.fa.gz"
 SILVA_SPECIES_ASSIGN = CONFIG_DIR / "silva_species_assignment_v138.1_v4.fa.gz"
 
 # --- Source tracking DB files ---
-SOURCE_TABLE = DB_DIR / "db_table.csv.gz"
-SOURCE_TABLE_NORM = DB_DIR / "db_table.norm.csv.gz"
-SOURCE_FASTA = DB_DIR / "db.fasta"
+SOURCE_BIOM = DB_DIR / "db.biom"
 SOURCE_DESIGN = DB_DIR / "MST.design"
+# Legacy separate files (kept for backward compatibility)
+SOURCE_TABLE = DB_DIR / "db_table.csv.gz"
+SOURCE_FASTA = DB_DIR / "db.fasta"
 
 # --- Conda ---
 CONDA_BASE = Path(os.environ.get("CONDA_BASE", Path.home() / "miniforge3"))

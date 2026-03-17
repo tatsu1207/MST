@@ -110,6 +110,7 @@ if _maybe_remove "$ENV_MAIN"; then
         bioconductor-dada2 \
         r-optparse \
         r-jsonlite \
+        r-data.table \
         "tbb=2020.*"
     success "Conda packages installed (Python + R/DADA2 + CLI tools + TBB pinned)."
 
@@ -124,7 +125,8 @@ if _maybe_remove "$ENV_MAIN"; then
         dash-uploader \
         plotly \
         sqlalchemy \
-        biom-format
+        biom-format \
+        fpdf2
     success "Pip packages installed."
 
 fi  # end _maybe_remove mst
@@ -174,6 +176,7 @@ checks = [
     ("biopython",               "Bio"),
     ("biom-format",             "biom"),
     ("h5py",                    "h5py"),
+    ("fpdf2",                   "fpdf"),
 ]
 for label, module in checks:
     try:

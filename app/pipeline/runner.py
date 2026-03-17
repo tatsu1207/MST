@@ -351,7 +351,7 @@ def _run_dada2_pipeline(dataset_id: int, file_ids: list[int], threads: int,
         from app.pipeline.dada2 import run_dada2
 
         # Long-read specific DADA2 parameters
-        band_size = defaults.get("band_size", 16)
+        band_size = defaults.get("band_size", 32)
         homopolymer_gap_penalty = defaults.get("homopolymer_gap_penalty", 0)
         max_ee = defaults.get("max_ee", 5.0)
         min_len = defaults.get("min_len", 0)
@@ -644,11 +644,10 @@ def _run_sourcetracker(run_id: int, sample_table_paths: list[str],
         logger.info(f"  Mode: {run.feature_mode}, src_depth={run.src_depth}, snk_depth={run.snk_depth}")
 
         from app.pipeline.sourcetracker import (
-            load_csv_gz, load_fasta, load_design,
+            load_csv_gz, load_source_biom,
             align_features, collapse_by_group, run_gibbs_subprocess,
             extract_v4_region,
         )
-        from app.config import SOURCE_TABLE, SOURCE_FASTA, SOURCE_DESIGN
 
         _update_status(run_dir, "loading", 5, [])
 
@@ -701,9 +700,7 @@ def _run_sourcetracker(run_id: int, sample_table_paths: list[str],
 
         logger.info(f"  Loaded {sink_df.shape[0]} ASVs x {sink_df.shape[1]} samples")
 
-        source_df = load_csv_gz(str(SOURCE_TABLE))
-        db_fasta = load_fasta(str(SOURCE_FASTA))
-        design = load_design(str(SOURCE_DESIGN))
+        source_df, db_fasta, design = load_source_biom()
 
         design_filtered = {s: g for s, g in design.items() if g in selected_groups}
 
@@ -1139,6 +1136,7 @@ def _run_pathogen(run_id: int, sample_table_paths: list[str],
         all_ds_ids = dataset_ids or ([run.dataset_id] if run.dataset_id else [])
 
         seq_to_genus = {}
+        seq_to_species = {}
         for ds_id in all_ds_ids:
             ds = db.query(Dataset).filter(Dataset.id == ds_id).first()
             if not ds or not ds.taxonomy_path:
@@ -1167,18 +1165,21 @@ def _run_pathogen(run_id: int, sample_table_paths: list[str],
                 if seq and seq not in seq_to_genus:
                     genus = row.get("Genus")
                     seq_to_genus[seq] = genus if pd.notna(genus) else None
+                    species = row.get("Species")
+                    seq_to_species[seq] = species if pd.notna(species) else None
 
         if not seq_to_genus:
             raise RuntimeError("No taxonomy data found. Please re-run DADA2 for selected datasets.")
 
         n_classified = sum(1 for g in seq_to_genus.values() if g)
-        logger.info(f"Loaded {n_classified}/{len(sequences)} genus assignments")
+        n_species = sum(1 for s in seq_to_species.values() if s)
+        logger.info(f"Loaded {n_classified}/{len(sequences)} genus assignments, {n_species} with species")
 
         _check_cancel(key)
         _update_status(run_dir, "detecting", 70, ["classifying"])
         logger.info("Detecting pathogens...")
 
-        count_df, ra_df = detect(asv_df, seq_to_genus)
+        count_df, ra_df = detect(asv_df, seq_to_genus, seq_to_species)
 
         if ra_df.empty:
             logger.info("No pathogenic bacteria detected")

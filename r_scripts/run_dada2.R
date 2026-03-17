@@ -82,10 +82,13 @@ tryCatch({
 
   # ── Step 2: Learn Error Rates (PacBio error model) ─────────────────────
 
-  cat("Learning error rates (PacBioErrfun, BAND_SIZE=", opt$band_size, ")...\n", sep="")
+  # Cap at 50M bases with random sampling for speed (matches 16S-Pipeline)
+  lr_nbases <- 5e7
+  cat("Learning error rates (PacBioErrfun, BAND_SIZE=", opt$band_size,
+      ", nbases=", format(lr_nbases, scientific=FALSE), ")...\n", sep="")
   errF <- learnErrors(filtFs, errorEstimationFunction=PacBioErrfun,
-                       BAND_SIZE=opt$band_size,
-                       multithread=use_mt)
+                       BAND_SIZE=opt$band_size, nbases=lr_nbases,
+                       randomize=TRUE, multithread=use_mt)
 
   # ── Step 3: Dereplicate + Denoise ──────────────────────────────────────
 
@@ -175,14 +178,34 @@ tryCatch({
 
   # Discover FASTQ files
   if (is_paired) {
-    fnFs <- sort(list.files(opt$input_dir, pattern="_R1([_.].*)?\\.(fastq|fq)(\\.gz)?$|_1\\.(fastq|fq)(\\.gz)?$", full.names=TRUE))
-    fnRs <- sort(list.files(opt$input_dir, pattern="_R2([_.].*)?\\.(fastq|fq)(\\.gz)?$|_2\\.(fastq|fq)(\\.gz)?$", full.names=TRUE))
+    # Try _R1/_R2 naming first, then _R1_001/_R2_001, then _1/_2 as fallback
+    # Derive R2 from R1 filenames to guarantee correct pairing regardless of sort order
+    fnFs <- sort(list.files(opt$input_dir, pattern="_R1\\.fastq(\\.gz)?$", full.names=TRUE))
+    r1_tag <- "_R1"; r2_tag <- "_R2"
+    name_pattern <- "_R1\\.fastq(\\.gz)?$"
+
+    if (length(fnFs) == 0) {
+      fnFs <- sort(list.files(opt$input_dir, pattern="_R1_001\\.fastq(\\.gz)?$", full.names=TRUE))
+      r1_tag <- "_R1_001"; r2_tag <- "_R2_001"
+      name_pattern <- "_R1_001\\.fastq(\\.gz)?$"
+    }
+    if (length(fnFs) == 0) {
+      fnFs <- sort(list.files(opt$input_dir, pattern="_1\\.fastq(\\.gz)?$", full.names=TRUE))
+      r1_tag <- "_1"; r2_tag <- "_2"
+      name_pattern <- "_1\\.fastq(\\.gz)?$"
+    }
 
     if (length(fnFs) == 0) stop("No forward (R1) FASTQ files found")
-    if (length(fnFs) != length(fnRs)) stop("Mismatched number of forward and reverse files")
+
+    # Derive R2 paths from R1 paths by replacing the tag
+    fnRs <- sub(paste0(r1_tag, "\\.fastq"), paste0(r2_tag, ".fastq"), fnFs)
+
+    # Verify all R2 files exist
+    missing_r2 <- fnRs[!file.exists(fnRs)]
+    if (length(missing_r2) > 0) stop("Missing R2 files: ", paste(basename(missing_r2), collapse=", "))
 
     # Extract sample names from forward reads
-    sample.names <- sub("_R1([_.].*)?\\.(fastq|fq)(\\.gz)?$|_1\\.(fastq|fq)(\\.gz)?$", "", basename(fnFs))
+    sample.names <- sub(name_pattern, "", basename(fnFs))
     cat("Found", length(fnFs), "paired-end samples\n")
   } else {
     fnFs <- sort(list.files(opt$input_dir, pattern="\\.(fastq|fq)(\\.gz)?$", full.names=TRUE))

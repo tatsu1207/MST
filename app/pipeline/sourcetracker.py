@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from app.config import SOURCE_TABLE, SOURCE_FASTA, SOURCE_DESIGN, ST_CONDA_ENV
+from app.config import SOURCE_BIOM, SOURCE_TABLE, SOURCE_FASTA, SOURCE_DESIGN, ST_CONDA_ENV
 
 from app.pipeline.detect import _iupac_to_regex, PRIMERS
 
@@ -99,6 +99,47 @@ def load_design(path=None) -> dict:
         if len(parts) >= 2:
             design[parts[0]] = parts[1]
     return design
+
+
+def load_source_biom():
+    """Load the source reference database from a single BIOM file.
+
+    Returns:
+        (source_df, db_fasta, design) where:
+        - source_df: pd.DataFrame (ASV_IDs x samples, counts)
+        - db_fasta: dict {ASV_ID: sequence}
+        - design: dict {sample: group}
+
+    Falls back to legacy separate files if db.biom is not found.
+    """
+    design = load_design(str(SOURCE_DESIGN))
+
+    if SOURCE_BIOM.exists():
+        import biom as biom_lib
+        t = biom_lib.load_table(str(SOURCE_BIOM))
+
+        # Build source_df: ASV_IDs x samples
+        sample_ids = list(t.ids(axis='sample'))
+        obs_ids = list(t.ids(axis='observation'))
+        source_df = pd.DataFrame(
+            t.matrix_data.toarray(),
+            index=obs_ids,
+            columns=sample_ids,
+        )
+
+        # Build db_fasta: {ASV_ID: sequence}
+        db_fasta = {}
+        for oid in obs_ids:
+            meta = t.metadata(oid, axis='observation')
+            if meta and 'sequence' in meta:
+                db_fasta[oid] = meta['sequence']
+
+        return source_df, db_fasta, design
+
+    # Fallback to legacy separate files
+    source_df = load_csv_gz(str(SOURCE_TABLE))
+    db_fasta = load_fasta(str(SOURCE_FASTA))
+    return source_df, db_fasta, design
 
 
 # -- Feature alignment ---------------------------------------------------------

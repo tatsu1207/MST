@@ -78,32 +78,97 @@ def get_layout():
         [
             html.H3("MST Pipeline", className="mb-4"),
 
-            # ── Section A: Upload FASTQ Files ────────────────────────────────
+            # ── Section A: Data Input ──────────────────────────────────────
             dbc.Card(
                 [
-                    dbc.CardHeader(html.H5("Upload FASTQ Files", className="mb-0")),
+                    dbc.CardHeader(html.H5("Data Input", className="mb-0")),
                     dbc.CardBody(
                         [
-                            du.Upload(
-                                id="fm-du-upload",
-                                text="Drag & drop FASTQ files here or click to browse",
-                                text_completed="Uploaded: ",
-                                max_file_size=5120,
-                                chunk_size=10,
-                                max_files=100,
-                                filetypes=["gz", "fastq", "fq"],
-                                cancel_button=True,
-                                pause_button=True,
+                            dbc.RadioItems(
+                                id="upload-mode-selector",
+                                options=[
+                                    {"label": "  Upload FASTQ Files", "value": "fastq"},
+                                    {"label": "  Import Pre-Processed BIOM File", "value": "biom"},
+                                ],
+                                value=None,
+                                inline=True,
+                                className="mb-3",
+                                inputClassName="me-1",
+                                labelClassName="me-4",
                             ),
-                            html.Div(id="fm-upload-file-status", className="mt-2"),
-                            dbc.Button(
-                                "Register Upload",
-                                id="fm-btn-register",
-                                color="success",
-                                className="mt-2",
-                                disabled=True,
+                            # ── FASTQ upload panel (hidden by default) ────────
+                            html.Div(
+                                id="fastq-upload-panel",
+                                children=[
+                                    du.Upload(
+                                        id="fm-du-upload",
+                                        text="Drag & drop FASTQ files here or click to browse",
+                                        text_completed="Uploaded: ",
+                                        max_file_size=5120,
+                                        chunk_size=10,
+                                        max_files=100,
+                                        filetypes=["gz", "fastq", "fq"],
+                                        cancel_button=True,
+                                        pause_button=True,
+                                    ),
+                                    html.Div(id="fm-upload-file-status", className="mt-2"),
+                                    dbc.Button(
+                                        "Register Upload",
+                                        id="fm-btn-register",
+                                        color="success",
+                                        className="mt-2",
+                                        disabled=True,
+                                    ),
+                                    html.Div(id="fm-upload-status", className="mt-3"),
+                                ],
+                                style={"display": "none"},
                             ),
-                            html.Div(id="fm-upload-status", className="mt-3"),
+                            # ── BIOM upload panel (hidden by default) ─────────
+                            html.Div(
+                                id="biom-upload-panel",
+                                children=[
+                                    html.P(
+                                        "Upload a BIOM file from an external DADA2 run to skip "
+                                        "directly to SourceTracker and Pathogen detection.",
+                                        className="text-muted small",
+                                    ),
+                                    dcc.Upload(
+                                        id="biom-upload",
+                                        children=html.Div([
+                                            "Drag & drop a ",
+                                            html.B(".biom"),
+                                            " file here, or ",
+                                            html.A("click to browse"),
+                                        ]),
+                                        style={
+                                            "width": "100%",
+                                            "height": "60px",
+                                            "lineHeight": "60px",
+                                            "borderWidth": "1px",
+                                            "borderStyle": "dashed",
+                                            "borderRadius": "5px",
+                                            "textAlign": "center",
+                                            "cursor": "pointer",
+                                        },
+                                    ),
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                dbc.Input(
+                                                    id="biom-name",
+                                                    placeholder="Dataset name (optional)",
+                                                    value="",
+                                                    size="sm",
+                                                ),
+                                                width=4,
+                                                className="mt-2",
+                                            ),
+                                        ],
+                                    ),
+                                    html.Div(id="biom-import-status", className="mt-2"),
+                                ],
+                                style={"display": "none"},
+                            ),
                         ]
                     ),
                 ],
@@ -116,57 +181,6 @@ def get_layout():
             dcc.Store(id="fm-sort-asc", data=True),
             dcc.Store(id="fm-checked-samples", data=[]),
             dcc.ConfirmDialog(id="fm-confirm-delete", message=""),
-
-            # ── Section A2: Import BIOM File ─────────────────────────────────
-            dbc.Card(
-                [
-                    dbc.CardHeader(html.H5("Import Pre-processed BIOM File", className="mb-0")),
-                    dbc.CardBody(
-                        [
-                            html.P(
-                                "Upload a BIOM file from an external DADA2 run to skip "
-                                "directly to SourceTracker and Pathogen detection.",
-                                className="text-muted small",
-                            ),
-                            dcc.Upload(
-                                id="biom-upload",
-                                children=html.Div([
-                                    "Drag & drop a ",
-                                    html.B(".biom"),
-                                    " file here, or ",
-                                    html.A("click to browse"),
-                                ]),
-                                style={
-                                    "width": "100%",
-                                    "height": "60px",
-                                    "lineHeight": "60px",
-                                    "borderWidth": "1px",
-                                    "borderStyle": "dashed",
-                                    "borderRadius": "5px",
-                                    "textAlign": "center",
-                                    "cursor": "pointer",
-                                },
-                            ),
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        dbc.Input(
-                                            id="biom-name",
-                                            placeholder="Dataset name (optional)",
-                                            value="",
-                                            size="sm",
-                                        ),
-                                        width=4,
-                                        className="mt-2",
-                                    ),
-                                ],
-                            ),
-                            html.Div(id="biom-import-status", className="mt-2"),
-                        ]
-                    ),
-                ],
-                className="mb-4",
-            ),
             dcc.Store(id="biom-taxonomy-dataset-id"),
 
             # ── Section B: Registered Samples + DADA2 ────────────────────────
@@ -385,6 +399,7 @@ def get_layout():
             ),
             dcc.Download(id="download-history-log"),
             dcc.Download(id="download-sample-asv"),
+            dcc.Download(id="download-st-pdf"),
 
             # ── Section C: Analysis (Source Tracking + Pathogen) ──────────────
             dbc.Card(
@@ -843,12 +858,10 @@ def _format_size(nbytes: int) -> str:
 
 def _get_source_db_stats():
     """Compute summary statistics for the source microbiome database."""
-    from app.pipeline.sourcetracker import load_csv_gz, load_design, GROUP_COLORS
-    from app.config import SOURCE_TABLE, SOURCE_DESIGN
+    from app.pipeline.sourcetracker import load_source_biom, GROUP_COLORS
 
     try:
-        source_df = load_csv_gz(str(SOURCE_TABLE))
-        design = load_design(str(SOURCE_DESIGN))
+        source_df, _, design = load_source_biom()
     except Exception:
         return None
 
@@ -1165,6 +1178,22 @@ def _build_history_table(checked_history=None):
 # ══════════════════════════════════════════════════════════════════════════════
 # Callbacks — Upload (Section A)
 # ══════════════════════════════════════════════════════════════════════════════
+
+
+@dash_app.callback(
+    Output("fastq-upload-panel", "style"),
+    Output("biom-upload-panel", "style"),
+    Input("upload-mode-selector", "value"),
+)
+def toggle_upload_panel(mode):
+    """Show the selected upload panel, hide the other."""
+    hidden = {"display": "none"}
+    visible = {"display": "block"}
+    if mode == "fastq":
+        return visible, hidden
+    elif mode == "biom":
+        return hidden, visible
+    return hidden, hidden
 
 
 @du.callback(
@@ -2558,6 +2587,15 @@ def poll_st_status(n_intervals, run_id):
                     style_header={"backgroundColor": "#2c3e50", "color": "white"},
                     style_cell={"backgroundColor": "white", "color": "#333", "textAlign": "center"},
                 ),
+                html.Div(
+                    dbc.Button(
+                        "Download PDF Report",
+                        id={"type": "btn-st-pdf", "index": run_id},
+                        color="primary",
+                        size="sm",
+                    ),
+                    className="mt-3 text-end",
+                ),
             ]), className="mb-3")
         else:
             results_area = dbc.Alert("Results not found", color="warning")
@@ -2594,6 +2632,51 @@ def poll_st_status(n_intervals, run_id):
 
 
 @dash_app.callback(
+    Output("download-st-pdf", "data"),
+    Input({"type": "btn-st-pdf", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def on_st_pdf_download(n_clicks_list):
+    if not any(n_clicks_list):
+        return no_update
+    triggered = ctx.triggered_id
+    run_id = triggered["index"]
+
+    from app.config import DATASET_DIR
+    from app.db.database import SessionLocal
+    from app.db.models import SourcetrackerRun, Dataset
+
+    run_dir = DATASET_DIR / f"st_{run_id}"
+    if not (run_dir / "proportions.csv").exists():
+        return no_update
+
+    db = SessionLocal()
+    try:
+        run = db.query(SourcetrackerRun).filter(SourcetrackerRun.id == run_id).first()
+        ds = db.query(Dataset).filter(Dataset.id == run.dataset_id).first() if run else None
+
+        run_params = {}
+        if run:
+            for key in ("feature_mode", "src_depth", "snk_depth", "restarts", "burnin", "draws"):
+                run_params[key] = getattr(run, key, None)
+
+        from app.pipeline.report import generate_st_report
+        pdf_path = generate_st_report(
+            run_id=run_id,
+            run_dir=run_dir,
+            run_name=run.name if run else None,
+            dataset_name=ds.name if ds else None,
+            variable_region=ds.variable_region if ds else None,
+            run_params=run_params,
+        )
+    finally:
+        db.close()
+
+    filename = f"source_tracking_report_{run_id}.pdf"
+    return dcc.send_file(str(pdf_path), filename=filename)
+
+
+@dash_app.callback(
     Output("tax-progress-area", "children"),
     Output("pathogen-results-area", "children"),
     Output("tax-poll", "disabled"),
@@ -2627,7 +2710,7 @@ def _poll_pathogen(run_id):
     if db_status == "complete":
         import pandas as pd
         from app.config import DATASET_DIR
-        from app.pipeline.pathogen import PATHOGENS, _PRIORITY_ORDER, genus_colors
+        from app.pipeline.pathogen import _PRIORITY_ORDER, get_priority, genus_colors
 
         run_dir = DATASET_DIR / f"pathogen_{run_id}"
         ra_path = run_dir / "pathogen_ra.csv"
@@ -2640,7 +2723,7 @@ def _poll_pathogen(run_id):
 
             genera = sorted(
                 ra_df.columns,
-                key=lambda g: (_PRIORITY_ORDER.index(PATHOGENS.get(g, "other")), g),
+                key=lambda g: (_PRIORITY_ORDER.index(get_priority(g)), g),
             )
             colors = genus_colors(genera)
 
@@ -2659,7 +2742,7 @@ def _poll_pathogen(run_id):
                 title="Pathogenic Bacteria  -  Relative Abundance (%)",
                 yaxis_title="Relative Abundance (%)",
                 template="plotly_white",
-                legend_title="Genus",
+                legend_title="Pathogen",
                 height=400,
             )
 

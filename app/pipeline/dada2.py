@@ -28,7 +28,7 @@ def run_dada2(
     logger: logging.Logger,
     proc_callback: Callable[[subprocess.Popen], None] | None = None,
     error_model: str = "default",
-    band_size: int = 16,
+    band_size: int = 32,
     homopolymer_gap_penalty: int = 0,
     max_ee: float = 5.0,
     min_len: int = 0,

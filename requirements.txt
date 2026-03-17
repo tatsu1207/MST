@@ -25,3 +25,6 @@ biopython>=1.81
 # --- BIOM format ---
 biom-format>=2.1.0
 h5py>=3.9.0
+
+# --- PDF Reports ---
+fpdf2>=2.7.0
