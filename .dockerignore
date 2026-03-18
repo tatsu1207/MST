@@ -1,0 +1,49 @@
+# Data (mounted as volume instead)
+data/uploads/*
+data/datasets/*
+
+# Database
+*.db
+*.sqlite*
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Logs
+*.log
+run.pid
+logs/
+
+# Git
+.git/
+.gitignore
+
+# Claude
+.claude/
+CLAUDE.md
+
+# Dev files
+DB_dev/
+scripts/
+test_samples/
+
+# Backup files
+DB/*.bak
+DB/*.bak2

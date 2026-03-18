@@ -1,0 +1,21 @@
+services:
+  pipeline:
+    image: unnot1207/mst-pipeline:latest
+    # To build locally instead of pulling, uncomment the next line:
+    # build: .
+    container_name: mst-pipeline
+    ports:
+      - "${PORT:-8050}:8050"
+    volumes:
+      - pipeline-data:/app/data
+    environment:
+      - PORT=8050
+      - DATABASE_PATH=/app/data/mst.db
+    deploy:
+      resources:
+        limits:
+          memory: 16g
+    restart: unless-stopped
+
+volumes:
+  pipeline-data:

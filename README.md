@@ -35,11 +35,36 @@ Then open Ubuntu from the Start menu and follow the Linux instructions above.
 ### 2. Start the server
 
 ```bash
-conda activate mst_py
+bash run.sh
+```
+
+Or manually:
+
+```bash
+conda activate mst
 uvicorn app.main:app --host 0.0.0.0 --port 8050
 ```
 
 Open `http://localhost:8050` in your browser.
+
+### Docker
+
+Run the pre-built image from Docker Hub (no conda setup required):
+
+```bash
+docker compose up -d
+```
+
+Or build locally:
+
+```bash
+docker build -t mst-pipeline .
+docker compose up -d
+```
+
+Open `http://localhost:8050` in your browser.
+
+Data (uploads, datasets, database) is persisted in a Docker volume automatically.
 
 ## Usage
 
@@ -116,12 +141,12 @@ The built-in source reference database contains 55,958 ASVs from 2,100 samples a
 
 ## Requirements
 
-- Linux (Ubuntu 20.04+) or Windows WSL
-- Miniconda or Miniforge
+- Linux (Ubuntu 20.04+) or Windows WSL, **or** Docker
+- Miniconda or Miniforge (not needed if using Docker)
 - 8 GB RAM minimum (16 GB recommended)
 - The setup script creates two conda environments:
-  - `mst_py` — Python 3.11, FastAPI, Plotly Dash, DADA2 (R), bioinformatics tools
-  - `mst_st2` — Python 3.9, SourceTracker2 (separate due to dependency constraints)
+  - `mst` — Python 3.11, FastAPI, Plotly Dash, DADA2 (R), bioinformatics tools
+  - `ST` — Python 3.9, SourceTracker2 (separate due to dependency constraints)
 
 ## Citation
 

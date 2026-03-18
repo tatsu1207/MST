@@ -14,7 +14,8 @@ CONFIG_DIR = PROJECT_DIR / "config"
 R_SCRIPTS_DIR = PROJECT_DIR / "r_scripts"
 
 # --- Database ---
-DATABASE_URL = f"sqlite:///{PROJECT_DIR / 'mst.db'}"
+_db_path = os.environ.get("DATABASE_PATH", str(PROJECT_DIR / "mst.db"))
+DATABASE_URL = f"sqlite:///{_db_path}"
 
 # --- Reference files ---
 ECOLI_REF = CONFIG_DIR / "ecoli.fas"
