@@ -5,4 +5,6 @@ mst.db
 run.log
 run.pid
 DB_dev/
+DB/*.bak
+DB/*.bak2
 CLAUDE.md
