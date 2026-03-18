@@ -66,6 +66,8 @@ Open `http://localhost:8050` in your browser.
 
 Data (uploads, datasets, database) is persisted in a Docker volume automatically.
 
+**Memory**: DADA2 and SourceTracker require significant RAM. Docker Desktop defaults to only ~4 GB, which may cause failures on large datasets. Increase it to **8–16 GB** in Docker Desktop → **Settings** → **Resources** → **Memory**.
+
 ## Usage
 
 ### Option A: From raw FASTQ files
