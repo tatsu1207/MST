@@ -8,7 +8,7 @@ An open-source, web-based platform for end-to-end microbial source tracking and 
 - **Automated quality optimization** — auto-detects truncation lengths and filtering parameters
 - **DADA2 ASV inference** — denoising, merging, and chimera removal
 - **Cross-region harmonization** — extracts V4 sub-region from any amplicon type for unified source tracking
-- **Source tracking** — Gibbs sampling via SourceTracker2 against a built-in reference database (10 source groups, 2,100 samples)
+- **Source tracking** — Gibbs sampling via SourceTracker2 against a built-in reference database (11 source groups, 2,020 samples)
 - **Pathogen detection** — screens 44 WHO-priority pathogenic genera with abundance summaries
 - **BIOM file support** — upload pre-processed BIOM files directly, skipping DADA2
 
@@ -118,20 +118,21 @@ For non-V4 amplicons, the V4 sub-region is automatically extracted before source
 
 ## Source Reference Database
 
-The built-in source reference database contains 55,958 ASVs from 2,100 samples across 10 source groups:
+The built-in source reference database contains 37,315 ASVs from 2,020 samples across 11 source groups:
 
-| Source group | Samples |
-|---|---|
-| Bat | 515 |
-| Human | 347 |
-| Pig | 300 |
-| Cow | 267 |
-| Horse | 242 |
-| Groundwater | 168 |
-| Chicken | 121 |
-| Duck | 74 |
-| Seawater | 43 |
-| River | 27 |
+| Source group | Samples | Description |
+|---|---|---|
+| Bat | 515 | Korean cave-roosting species |
+| Human | 308 | Fecal samples from Korean cohorts |
+| Pig | 298 | Korean pig farms |
+| Horse | 217 | Korean horse farms |
+| Cow | 199 | Korean beef and dairy cattle |
+| Groundwater | 168 | Korean groundwater wells |
+| Chicken | 119 | Korean poultry farms |
+| Bird | 68 | Wild/zoo birds (12 species; [Youngblut et al. 2023](https://doi.org/10.3389/fmicb.2023.1239167)) |
+| Duck | 58 | Korean domestic duck farms |
+| Seawater | 43 | Korean coastal seawater |
+| River | 27 | Korean river water |
 
 ## Database files
 
