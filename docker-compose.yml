@@ -1,6 +1,6 @@
 services:
   pipeline:
-    image: unnot1207/mst-pipeline:latest
+    image: ghcr.io/tatsu1207/mst-pipeline:latest
     # To build locally instead of pulling, uncomment the next line:
     # build: .
     container_name: mst-pipeline
