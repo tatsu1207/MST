@@ -14,55 +14,13 @@ An open-source, web-based platform for end-to-end microbial source tracking and 
 
 ## Quick Start
 
-### 1. Installation
-
-**Linux / WSL (Windows):**
-
-```bash
-git clone https://github.com/tatsu1207/MST-Pipeline.git
-cd MST-Pipeline
-bash setup_ubuntu.sh    # or setup_wsl.sh on Windows WSL
-```
-
-This creates the required conda environments and downloads the SILVA v138.1 reference database.
-
-**Windows users:** Install WSL first:
-```powershell
-wsl --install
-```
-Then open Ubuntu from the Start menu and follow the Linux instructions above.
-
-### 2. Start the server
-
-```bash
-bash run.sh
-```
-
-Or manually:
-
-```bash
-conda activate mst
-uvicorn app.main:app --host 0.0.0.0 --port 8050
-```
-
-Open `http://localhost:8050` in your browser.
-
-### Docker
-
-Run the pre-built image from Docker Hub (no conda setup required):
-
 ```bash
 docker compose up -d
 ```
 
-Or build locally:
+Open `http://localhost:8050` in your browser. That's it.
 
-```bash
-docker build -t mst-pipeline .
-docker compose up -d
-```
-
-Open `http://localhost:8050` in your browser.
+The pre-built image is pulled from `ghcr.io/tatsu1207/mst-pipeline:latest` — no conda setup, no dependencies to install.
 
 Data (uploads, datasets, database) is persisted in a Docker volume automatically.
 
@@ -144,12 +102,8 @@ The built-in source reference database contains 37,622 ASVs from 2,084 samples a
 
 ## Requirements
 
-- Linux (Ubuntu 20.04+) or Windows WSL, **or** Docker
-- Miniconda or Miniforge (not needed if using Docker)
+- Docker (Docker Desktop on Mac/Windows, or Docker Engine on Linux)
 - 8 GB RAM minimum (16 GB recommended)
-- The setup script creates two conda environments:
-  - `mst` — Python 3.11, FastAPI, Plotly Dash, DADA2 (R), bioinformatics tools
-  - `ST` — Python 3.9, SourceTracker2 (separate due to dependency constraints)
 
 ## Citation
 

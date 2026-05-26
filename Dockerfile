@@ -65,7 +65,8 @@ RUN mamba create -n ST --override-channels -c conda-forge -c bioconda \
 COPY app/ /app/app/
 COPY r_scripts/ /app/r_scripts/
 COPY config/ /app/config/
-COPY DB/ /app/DB/
+COPY DB/db.fasta DB/db_table.csv.gz DB/MST.design /app/DB/
+COPY scripts/_run_gibbs.py /app/scripts/_run_gibbs.py
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 

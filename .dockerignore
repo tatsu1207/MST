@@ -42,8 +42,10 @@ CLAUDE.md
 # Dev files
 DB_dev/
 scripts/
+!scripts/_run_gibbs.py
 test_samples/
 
 # Backup files
 DB/*.bak
 DB/*.bak2
+DB/backup_before_bird/
